@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Recorrí Un Campo Interminable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; background-color: #120902; font-family: 'Montserrat', sans-serif; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; overscroll-behavior: none; position: fixed; width: 100%; overflow: hidden; }
+        .scene { position: absolute; inset: 0; overflow: hidden; z-index: 1; }
+        .sky { position: absolute; inset: 0; z-index: 0; background: linear-gradient(to bottom, #2a1a4a 0%, #5b2a63 24%, #a23c5a 46%, #e0673b 68%, #f2a03d 84%, #ffd27a 100%); }
+        .warm { position: absolute; inset: 0; opacity: 0; z-index: 1; background: linear-gradient(to bottom, rgba(60,20,40,0) 30%, rgba(255,120,40,0.28) 70%, rgba(255,180,90,0.5) 100%); }
+        .sun { position: absolute; left: 50%; top: 44%; width: 40vmin; height: 40vmin; transform: translate(-50%, -50%); background: radial-gradient(circle, #fffbe0 0%, #ffe27a 24%, #ffab33 46%, rgba(255,120,40,0.35) 66%, transparent 76%); border-radius: 50%; z-index: 1; will-change: transform, opacity; }
+        .haze { position: absolute; left: 0; right: 0; top: 40%; height: 26%; pointer-events: none; background: linear-gradient(to bottom, transparent, rgba(255,190,120,0.35), transparent); filter: blur(10px); z-index: 2; }
+        .ground { position: absolute; left: 0; right: 0; top: 47%; bottom: 0; z-index: 2; background: repeating-conic-gradient(at 50% -2%, transparent 0deg, transparent 2.5deg, rgba(0,0,0,0.06) 3deg, rgba(0,0,0,0.06) 4deg, transparent 4.5deg), linear-gradient(to bottom, #ad6d26 0%, #7a4516 15%, #4a290d 35%, #261506 65%, #120902 100%); box-shadow: 0 -14px 46px rgba(255,190,100,0.4); }
+        .field { position: absolute; inset: 0; z-index: 4; display: block; }
+        .vignette { position: absolute; inset: 0; z-index: 8; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, transparent 42%, rgba(30,8,20,0.62) 100%); }
+        .letter { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 20; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; padding: 6vw; }
+        .letter-card { max-width: min(560px, 90vw); padding: clamp(1.8rem, 5vw, 3rem) clamp(1.6rem, 5vw, 2.8rem); text-align: center; background: radial-gradient(circle at 30% 20%, rgba(255,250,235,0.07), transparent 60%), linear-gradient(160deg, rgba(44,24,11,0.92), rgba(22,11,4,0.95)); border: 1px solid rgba(255,214,140,0.32); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 60px rgba(255,170,70,0.25), inset 0 0 40px rgba(255,180,90,0.08); transform: translateY(24px) scale(0.94); }
+        .letter-date { font-size: clamp(0.62rem, 2.4vw, 0.78rem); letter-spacing: 0.42em; padding-left: 0.42em; text-transform: uppercase; color: rgba(255,214,150,0.75); margin-bottom: 1.1rem; }
+        .letter-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: clamp(1.9rem, 7vw, 3.2rem); line-height: 1.1; color: #ffe9c2; text-shadow: 0 0 26px rgba(255,180,90,0.45); margin-bottom: 1.4rem; }
+        .letter-body { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.05rem, 3.6vw, 1.5rem); line-height: 1.75; color: rgba(255,238,214,0.92); }
+        .letter-body p { margin: 0.15rem 0; }
+        .letter-sign { margin-top: 1.7rem; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: clamp(0.95rem, 3.2vw, 1.25rem); color: rgba(255,210,150,0.8); }
+        .walk-hint { position: fixed; left: 50%; bottom: 6vh; transform: translateX(-50%); z-index: 18; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; transition: opacity 0.8s ease; pointer-events: none; }
+        .walk-text { font-size: clamp(0.62rem, 2.2vw, 0.76rem); letter-spacing: 0.34em; padding-left: 0.34em; text-transform: uppercase; color: rgba(255,236,205,0.82); text-shadow: 0 2px 12px rgba(0,0,0,0.7); }
+        .walk-arrow { font-size: 1.4rem; color: rgba(255,236,205,0.82); animation: bounceDown 1.8s ease-in-out infinite; }
+        .music-btn { position: fixed; top: 20px; right: 20px; z-index: 25; background: rgba(44,24,11,0.75); border: 1px solid rgba(255,214,140,0.4); color: #ffe9c2; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px); transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+        .music-btn:hover { background: rgba(60,32,15,0.9); transform: scale(1.08); }
+        .music-btn.playing { animation: pulseMusic 2s infinite; border-color: rgba(255,214,140,0.8); }
+        @keyframes bounceDown { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(7px); opacity: 1; } }
+        @keyframes pulseMusic { 0% { box-shadow: 0 0 0 0 rgba(255,214,140,0.4); } 70% { box-shadow: 0 0 0 10px rgba(255,214,140,0); } 100% { box-shadow: 0 0 0 0 rgba(255,214,140,0); } }
+    </style>
+</head>
+<body>
+    <div id="loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-500" style="background:linear-gradient(to bottom,#5b2a63 0%,#a23c5a 30%,#e0673b 55%,#f2a03d 78%,#ffd27a 100%)">
+        <svg class="animate-pulse w-20 h-20 mb-5" viewBox="0 0 48 48" style="filter:drop-shadow(0 4px 10px rgba(90,30,10,0.4))">
+            <g transform="translate(24,24)" fill="#ffc21f">
+                <g transform="rotate(0)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(30)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(60)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(90)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(120)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(150)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(180)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(210)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(240)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(270)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(300)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+                <g transform="rotate(330)"><ellipse cx="0" cy="-14" rx="3.6" ry="8.6"/></g>
+            </g>
+            <circle cx="24" cy="24" r="8.2" fill="#5a3512"/>
+            <circle cx="24" cy="24" r="8.2" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="1.2"/>
+            <circle cx="24" cy="24" r="4.6" fill="none" stroke="rgba(255,210,140,0.35)" stroke-width="1.6"/>
+        </svg>
+        <span class="uppercase text-sm" style="color:#fff4d8;font-family:'Cormorant Garamond',serif;font-style:italic;letter-spacing:.34em;padding-left:.34em;text-shadow:0 2px 12px rgba(60,20,10,.6)">Cargando...</span>
+    </div>
+
+    <button class="music-btn" id="musicBtn" title="Reproducir música">
+        <svg id="musicIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+    </button>
+
+    <audio id="bgAudio" loop>
+        <source src="amor.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="scene" id="scene">
+        <div class="sky"></div>
+        <div class="warm" id="warm"></div>
+        <div class="sun" id="sun"></div>
+        <div class="haze"></div>
+        <div class="ground"></div>
+        <canvas class="field" id="field"></canvas>
+        <div class="vignette"></div>
+    </div>
+
+    <div class="letter" id="letter">
+        <div class="letter-card">
+            <p class="letter-date" id="letterDate">13 De Septiembre 26</p>
+            <h1 class="letter-title" id="letterTitle">Felices 16 Meses 🤍 </h1>
+            <div class="letter-body" id="letterBody">
+                <p>Bebé🤍  hoy cumplimos 1 año y 4 meses juntos, y la verdad me pongo.. a pensar en todo lo que hemos vivido y me siento muy feliz de tenerte en mi foquin vida. Hemos pasado por momentos muy monitos, tamién por momentos difíciles, pero a pesar de todo seguimos aquí, aprendiendo y creciendo juntosh. Glaciash por cada momento, por cada risa, por tu cariño y por estar conmigo. No todo ha sido perfecto, no soy perfecto, pero creo que eso también hace especial nuestra historia, poque hemos aprendido a conocernos, entendernos y seguir adelante. Quielo que sepas que te Amo Mushote y que valoro cada segundo que compartimos. Espero que sigamos creando recuerdos y viviendo muchas cosas juntosh. Felices 1 año y 4 mesesh, mi amor. 🤍 Glacias por ser parte de mi vida y por hacer que estos meses sean tan especiales. Te Amo Mushote. 🥺🤍</p>
+            </div>
+            <p class="letter-sign" id="letterSign">Te Amo Mushote</p>
+        </div>
+    </div>
+
+    <div class="walk-hint" id="walkHint">
+        <span class="walk-text" id="walkText">Caminemosh🤍</span>
+        <span class="walk-arrow">⌄</span>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 500);
+            startAnimation();
+        });
+
+        // Music control
+        const musicBtn = document.getElementById('musicBtn');
+        const bgAudio = document.getElementById('bgAudio');
+        let isPlaying = false;
+
+        musicBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                bgAudio.pause();
+                musicBtn.classList.remove('playing');
+                musicBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
+                isPlaying = false;
+            } else {
+                bgAudio.play().then(() => {
+                    musicBtn.classList.add('playing');
+                    musicBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+                    isPlaying = true;
+                }).catch(e => console.log("Audio play blocked", e));
+            }
+        });
+
+        function startAnimation() {
+            const canvas = document.getElementById('field');
+            const ctx = canvas.getContext('2d');
+            const sunElem = document.getElementById('sun');
+            const warmElem = document.getElementById('warm');
+            const walkHint = document.getElementById('walkHint');
+            const letterElem = document.getElementById('letter');
+            const letterCard = letterElem.querySelector('.letter-card');
+
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+            let dpr = window.devicePixelRatio || 1;
+
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            let scrollProgress = 0;
+            const maxScroll = height * 2.5;
+            let isDragging = false;
+            let startY = 0;
+
+            function handleScroll(delta) {
+                scrollProgress = Math.max(0, Math.min(maxScroll, scrollProgress + delta));
+                const p = scrollProgress / maxScroll;
+
+                if (p > 0.05 && walkHint.style.opacity !== '0') {
+                    walkHint.style.opacity = '0';
+                } else if (p <= 0.05 && walkHint.style.opacity === '0') {
+                    walkHint.style.opacity = '1';
+                }
+
+                sunElem.style.transform = `translate(-50%, -50%) translateY(${p * height * 0.12}px) scale(${1 + p * 0.35})`;
+                sunElem.style.opacity = Math.max(0, 1 - p * 0.3);
+                warmElem.style.opacity = Math.min(1, p * 1.5);
+
+                const letterProgress = Math.max(0, Math.min(1, (p - 0.55) / 0.4));
+                letterElem.style.opacity = letterProgress;
+                letterElem.style.pointerEvents = letterProgress > 0.1 ? 'auto' : 'none';
+                const cardScale = 0.94 + 0.06 * letterProgress;
+                const cardTranslateY = 24 * (1 - letterProgress);
+                letterCard.style.transform = `translateY(${cardTranslateY}px) scale(${cardScale})`;
+            }
+
+            window.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                handleScroll(e.deltaY);
+            }, { passive: false });
+
+            window.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                startY = e.touches[0].clientY;
+            }, { passive: false });
+
+            window.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const currentY = e.touches[0].clientY;
+                const delta = startY - currentY;
+                startY = currentY;
+                handleScroll(delta * 1.2);
+            }, { passive: false });
+
+            window.addEventListener('touchend', () => { isDragging = false; });
+
+            const flowers = [];
+            const count = 46;
+            for (let i = 0; i < count; i++) {
+                flowers.push({
+                    x: (i + 0.5) / count * 2.6 - 1.3 + (Math.random() - 0.5) * 0.35,
+                    speed: 0.45 + Math.random() * 0.3,
+                    size: (0.6 + Math.random() * 1.2),
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+
+            // Floating golden petals / sparkles
+            const petals = [];
+            const petalCount = 35;
+            for (let i = 0; i < petalCount; i++) {
+                petals.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: 3 + Math.random() * 5,
+                    speedY: 0.4 + Math.random() * 0.8,
+                    speedX: (Math.random() - 0.5) * 0.6,
+                    rotation: Math.random() * Math.PI * 2,
+                    rotSpeed: (Math.random() - 0.5) * 0.04,
+                    alpha: 0.2 + Math.random() * 0.5
+                });
+            }
+
+            function drawSunflower(x, y, scale, isBig = false) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.scale(scale, scale);
+
+                if (!isBig) {
+                    ctx.strokeStyle = '#2c4d18';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(-10, 40, -5, 80);
+                    ctx.stroke();
+                }
+
+                const petalCount = isBig ? 24 : 16;
+                const petalLength = isBig ? 45 : 28;
+                const petalWidth = isBig ? 6 : 4.5;
+                for (let i = 0; i < petalCount; i++) {
+                    ctx.save();
+                    ctx.rotate((i * Math.PI * 2) / petalCount);
+                    ctx.fillStyle = isBig ? '#ffdb4d' : '#ffc21f';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -petalLength * 0.65, petalWidth, petalLength * 0.4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                const centerRadius = isBig ? 22 : 11;
+                ctx.fillStyle = '#5a3512';
+                ctx.beginPath();
+                ctx.arc(0, 0, centerRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (isBig) {
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+
+            function animate(timestamp) {
+                ctx.clearRect(0, 0, width, height);
+
+                const p = scrollProgress / maxScroll;
+
+                // 1. Girasol grande principal FIJO en el centro
+                const bigSize = Math.min(width, height) * 0.35;
+                drawSunflower(width / 2, height * 0.47, bigSize / 50, true);
+
+                // 2. Demás girasoles del campo que aparecen y se mueven al deslizar
+                flowers.forEach(f => {
+                    const depth = (f.phase + scrollProgress * 0.002 * f.speed) % 1.7;
+                    const scale = (0.1 + 1.8 * depth) * f.size * (width / 1200);
+                    const fx = width / 2 + f.x * (0.12 + 1.12 * depth) * (width * 0.6);
+                    const fy = height * 0.47 - 24 + (height - height * 0.47 + 300) * depth;
+                    
+                    if (scale > 0.05) {
+                        drawSunflower(fx, fy, scale, false);
+                    }
+                });
+
+                // 3. Pétalos dorados flotando
+                petals.forEach(pt => {
+                    pt.y -= pt.speedY;
+                    pt.x += pt.speedX + Math.sin(timestamp * 0.0015 + pt.y * 0.008) * 0.4;
+                    if (pt.y < -20) {
+                        pt.y = height + 20;
+                        pt.x = Math.random() * width;
+                    }
+                    ctx.save();
+                    ctx.translate(pt.x, pt.y);
+                    ctx.rotate(pt.rotation);
+                    ctx.globalAlpha = pt.alpha;
+                    ctx.fillStyle = '#ffdf70';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, pt.size, pt.size * 0.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                    pt.rotation += pt.rotSpeed;
+                });
+
+                requestAnimationFrame(animate);
+            }
+            requestAnimationFrame(animate);
+        }
+    </script>
+</body>
+</html>
